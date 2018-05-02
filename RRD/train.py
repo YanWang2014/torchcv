@@ -34,7 +34,7 @@ train_image_files = '../../data/train_1000/image_1000/'
 
 checkpoints = 'pths/ckpt.pth'
 resume = False
-INPUT_WORKERS = 4
+INPUT_WORKERS = 16
 
 
 # Model
@@ -91,14 +91,12 @@ valloader =  data.DataLoader(valset, batch_size=batch_size,
                                #collate_fn=text_dataset.bbox_collate_fn
                                )
 
-print(len(trainloader))
-print(len(valloader))
-img, bboxes, labels, img_name= next(iter(trainloader))
-print(img.size())
-print(bboxes.size())
-print(labels.size())
-#print(img_name.size())
-
+#print(len(trainloader))
+#print(len(valloader))
+#img, bboxes, labels, img_name= next(iter(trainloader))
+#print(img.size())
+#print(bboxes.size())
+#print(labels.size())
 
 net = torch.nn.DataParallel(net)#, device_ids=[2,3,4,5])
 cudnn.benchmark = True
