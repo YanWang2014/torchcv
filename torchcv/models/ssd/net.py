@@ -23,6 +23,7 @@ class VGG16(nn.Module):
         for x in cfg:
             if x == 'M':
                 layers += [nn.MaxPool2d(kernel_size=2, stride=2, ceil_mode=True)]
+                # ceil_mode - 如果等于True，计算输出信号大小的时候，会使用向上取整，代替默认的向下取整的操作
             else:
                 layers += [nn.Conv2d(in_channels, x, kernel_size=3, padding=1),
                            nn.ReLU(True)]
@@ -122,7 +123,7 @@ class SSD300(nn.Module):
         self.loc_layers = nn.ModuleList()
         self.cls_layers = nn.ModuleList()
         for i in range(len(self.in_channels)):
-        	self.loc_layers += [nn.Conv2d(self.in_channels[i], self.num_anchors[i]*4, kernel_size=3, padding=1)]
+        	self.loc_layers += [nn.Conv2d(self.in_channels[i], self.num_anchors[i]*8, kernel_size=3, padding=1)]
         	self.cls_layers += [nn.Conv2d(self.in_channels[i], self.num_anchors[i]*self.num_classes, kernel_size=3, padding=1)]
 
     def forward(self, x):
@@ -132,7 +133,7 @@ class SSD300(nn.Module):
         for i, x in enumerate(xs):
             loc_pred = self.loc_layers[i](x)
             loc_pred = loc_pred.permute(0,2,3,1).contiguous()
-            loc_preds.append(loc_pred.view(loc_pred.size(0),-1,4))
+            loc_preds.append(loc_pred.view(loc_pred.size(0),-1,8))
 
             cls_pred = self.cls_layers[i](x)
             cls_pred = cls_pred.permute(0,2,3,1).contiguous()
@@ -226,7 +227,7 @@ class SSD512(nn.Module):
         self.loc_layers = nn.ModuleList()
         self.cls_layers = nn.ModuleList()
         for i in range(len(self.in_channels)):
-        	self.loc_layers += [nn.Conv2d(self.in_channels[i], self.num_anchors[i]*4, kernel_size=3, padding=1)]
+        	self.loc_layers += [nn.Conv2d(self.in_channels[i], self.num_anchors[i]*8, kernel_size=3, padding=1)]
         	self.cls_layers += [nn.Conv2d(self.in_channels[i], self.num_anchors[i]*self.num_classes, kernel_size=3, padding=1)]
 
     def forward(self, x):
@@ -236,7 +237,7 @@ class SSD512(nn.Module):
         for i, x in enumerate(xs):
             loc_pred = self.loc_layers[i](x)
             loc_pred = loc_pred.permute(0,2,3,1).contiguous()
-            loc_preds.append(loc_pred.view(loc_pred.size(0),-1,4))
+            loc_preds.append(loc_pred.view(loc_pred.size(0),-1,8))
 
             cls_pred = self.cls_layers[i](x)
             cls_pred = cls_pred.permute(0,2,3,1).contiguous()

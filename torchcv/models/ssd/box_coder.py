@@ -4,7 +4,7 @@ import torch
 import itertools
 
 from torchcv.utils import meshgrid
-from torchcv.utils.box import box_iou, box_nms, change_box_order
+from torchcv.utils.box import box_iou, box_nms, change_box_order, quadrilateral_iou
 
 
 class SSDBoxCoder:
@@ -40,15 +40,15 @@ class SSDBoxCoder:
         SSD coding rules:
           tx = (x - anchor_x) / (variance[0]*anchor_w)
           ty = (y - anchor_y) / (variance[0]*anchor_h)
-          tw = log(w / anchor_w) / variance[1]
-          th = log(h / anchor_h) / variance[1]
+          #tw = log(w / anchor_w) / variance[1]
+          #th = log(h / anchor_h) / variance[1]
 
         Args:
-          boxes: (tensor) bounding boxes of (xmin,ymin,xmax,ymax), sized [#obj, 4].
+          boxes: (tensor) bounding boxes of (x1,y1,x2,y2,x3,y3,x4,y4), sized [#obj, 8].
           labels: (tensor) object class labels, sized [#obj,].
 
         Returns:
-          loc_targets: (tensor) encoded bounding boxes, sized [#anchors,4].
+          loc_targets: (tensor) encoded bounding boxes, sized [#anchors,8].
           cls_targets: (tensor) encoded class labels, sized [#anchors,].
 
         Reference:
@@ -60,9 +60,9 @@ class SSDBoxCoder:
             return (i[j], j)
 
         default_boxes = self.default_boxes  # xywh
-        default_boxes = change_box_order(default_boxes, 'xywh2xyxy')
+        default_boxes = change_box_order(default_boxes, 'xywh2xyxyxyxy')
 
-        ious = box_iou(default_boxes, boxes)  # [#anchors, #obj]
+        ious = quadrilateral_iou(default_boxes, boxes)  # [#anchors, #obj]
         index = torch.LongTensor(len(default_boxes)).fill_(-1)
         masked_ious = ious.clone()
         while True:
@@ -78,13 +78,14 @@ class SSDBoxCoder:
             index[mask] = ious[mask.nonzero().squeeze()].max(1)[1]
 
         boxes = boxes[index.clamp(min=0)]  # negative index not supported
-        boxes = change_box_order(boxes, 'xyxy2xywh')
-        default_boxes = change_box_order(default_boxes, 'xyxy2xywh')
+        #boxes = change_box_order(boxes, 'xyxy2xywh')
+        #default_boxes = change_box_order(default_boxes, 'xyxy2xywh')
 
         variances = (0.1, 0.2)
-        loc_xy = (boxes[:,:2]-default_boxes[:,:2]) / default_boxes[:,2:] / variances[0]
-        loc_wh = torch.log(boxes[:,2:]/default_boxes[:,2:]) / variances[1]
-        loc_targets = torch.cat([loc_xy,loc_wh], 1)
+#        loc_xy = (boxes[:,:2]-default_boxes[:,:2]) / default_boxes[:,2:] / variances[0]
+#        loc_wh = torch.log(boxes[:,2:]/default_boxes[:,2:]) / variances[1]
+#        loc_targets = torch.cat([loc_xy,loc_wh], 1)
+        loc_targets = (boxes-default_boxes / self.default_boxes[:,2:].repeat(1,4)) / variances[0]
         cls_targets = 1 + labels[index.clamp(min=0)]
         cls_targets[index<0] = 0
         return loc_targets, cls_targets
@@ -93,7 +94,7 @@ class SSDBoxCoder:
         '''Decode predicted loc/cls back to real box locations and class labels.
 
         Args:
-          loc_preds: (tensor) predicted loc, sized [8732,4].
+          loc_preds: (tensor) predicted loc, sized [8732,4] or [8732,8].
           cls_preds: (tensor) predicted conf, sized [8732,21].
           score_thresh: (float) threshold for object confidence score.
           nms_thresh: (float) threshold for box nms.
@@ -103,10 +104,12 @@ class SSDBoxCoder:
           labels: (tensor) class labels, sized [#obj,].
         '''
         variances = (0.1, 0.2)
-        xy = loc_preds[:,:2] * variances[0] * self.default_boxes[:,2:] + self.default_boxes[:,:2]
-        wh = torch.exp(loc_preds[:,2:]*variances[1]) * self.default_boxes[:,2:]
-        box_preds = torch.cat([xy-wh/2, xy+wh/2], 1)
-
+        #xy = loc_preds[:,:2] * variances[0] * self.default_boxes[:,2:] + self.default_boxes[:,:2]
+        #wh = torch.exp(loc_preds[:,2:]*variances[1]) * self.default_boxes[:,2:]
+        #box_preds = torch.cat([xy-wh/2, xy+wh/2], 1)
+        default_boxes = change_box_order(self.default_boxes, 'xywh2xyxyxyxy')
+        box_preds = loc_preds * variances[0] * self.default_boxes[:,2:].repeat(1,4) + default_boxes
+        
         boxes = []
         labels = []
         scores = []
@@ -128,3 +131,6 @@ class SSDBoxCoder:
         labels = torch.cat(labels, 0)
         scores = torch.cat(scores, 0)
         return boxes, labels, scores
+    
+if __name__ == "__main__":
+    pass
