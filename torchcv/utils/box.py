@@ -147,7 +147,7 @@ def quadrilateral_iou(box1, box2):
     box1_np = box1.numpy()
     box2_np = box2.numpy()
     
-    #pool = multiprocessing.Pool()#(processes=16)
+    #pool = multiprocessing.Pool(processes=16)
     tasks = [polygon_iou(box1_np[i,:], box2_np[j,:]) for (i,j) in itertools.product(range(N), range(M))]
     #iou = pool.starmap(polygon_iou, tasks)
     iou = np.stack(tasks)

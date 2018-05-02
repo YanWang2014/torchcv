@@ -11,6 +11,8 @@ from torch.utils.data.dataloader import default_collate
 import numpy as np
 import random
 from .transforms import resize
+import torchvision
+import torchvision.transforms as T
 
 #import cv2
 
@@ -38,13 +40,19 @@ class TextDataset(data.Dataset):
         self.mode = mode
         
         if mode != 'test':
-            self.bboxes = []
+            self.bboxes = [] 
+            self.labels = []
             for img_name in self.image_names:
                 bboxes = []
+                labels = []
                 for line in open(os.path.join(self.label_files, img_name + '.txt'), 'r', encoding='UTF-8').read().splitlines():
                     items = line.split(',')
                     bboxes.append([float(i) for i in items[:8]])
+                    labels.append(1)
                 self.bboxes.append(torch.Tensor(bboxes))
+                self.labels.append(torch.LongTensor(labels))
+
+        print('Finish dataset init')
 
     def __len__(self):
         return len(self.image_names)
@@ -73,9 +81,8 @@ class TextDataset(data.Dataset):
             return image, img_name
         else:
             bboxes = self.bboxes[idx].clone()
+            labels = self.labels[idx].clone()
             if self.transform:
-                #image = self.transform(image)
-                labels = torch.ones(len(bboxes),)
                 image, bboxes, labels = self.transform(image, bboxes, labels)
             return image, bboxes, labels, img_name
 
@@ -95,7 +102,7 @@ def bbox_collate_fn(batch_list):
     return [default_collate(image_tensor_list), bboxes, labels, name_list]
 
 if __name__ == "__main__":
-    __spec__ = "ModuleSpec(name='builtins', loader=<class '_frozen_importlib.BuiltinImporter'>)"
+    #__spec__ = "ModuleSpec(name='builtins', loader=<class '_frozen_importlib.BuiltinImporter'>)"
 
     print('start here')
 
@@ -118,17 +125,17 @@ if __name__ == "__main__":
     
     batch_size  = 4
     INPUT_WORKERS = 4
-    train_label_files = '../train_part1_20180316/train_1000/txt_1000/'
-    train_image_files = '../train_part1_20180316/train_1000/image_1000/'
+    train_label_files = '../../../data/train_1000/txt_1000/'
+    train_image_files = '../../../data/train_1000/image_1000/'
 
-    def train_transform(img, boxes):
+    def train_transform(img, boxes,labels):
         #img, boxes = random_paste(img, boxes, max_ratio=4, fill=(123,116,103))
         #img, boxes, labels = random_crop(img, boxes, labels)
         #img, _ = transforms.resize(img, boxes, size=600, random_interpolation=True)
         #img, boxes = random_flip(img, boxes)
         img = T.Resize((512, 512))(img)
         img = T.ToTensor()(img)
-        return img, boxes
+        return img, boxes, labels
 
     transformed_dataset_test = TextDataset(label_files = train_label_files,
                                            image_files = train_image_files,
@@ -173,7 +180,7 @@ if __name__ == "__main__":
         plt.imshow(inp)
         plt.pause(1)
         
-    imshow(img[0,:,:,:])
+    #imshow(img[0,:,:,:])
     print(img_name[0])
     print(len(img_name))
     print(len(bboxes))

@@ -18,7 +18,7 @@ import torchvision.transforms as T
 from PIL import Image
 from torch.autograd import Variable
 
-from torchcv.models.fpnssd import FPNSSD512
+#from torchcv.models.fpnssd import FPNSSD512
 from torchcv.models.ssd import SSD300, SSD512, SSDBoxCoder
 
 from torchcv.loss import SSDLoss
@@ -26,20 +26,20 @@ from utils import text_dataset
 from utils import transforms
 
 lr =1e-3
-img_size = 512
+img_size = 300
 batch_size  = 32
 
-train_label_files = '../../data/txt_9000/'
-train_image_files = '../../data/image_9000/'
+train_label_files = '../../data/train_1000/txt_1000/'
+train_image_files = '../../data/train_1000/image_1000/'
 
 checkpoints = 'pths/ckpt.pth'
 resume = False
-INPUT_WORKERS = 8
+INPUT_WORKERS = 4
 
 
 # Model
 print('==> Building model..')
-net = SSD512(num_classes=2)
+net = SSD300(num_classes=2)
 #net = FPNSSD512(num_classes=2)
 #net.load_state_dict(torch.load(args.model))
 best_loss = float('inf')  # best test loss
@@ -91,6 +91,15 @@ valloader =  data.DataLoader(valset, batch_size=batch_size,
                                #collate_fn=text_dataset.bbox_collate_fn
                                )
 
+print(len(trainloader))
+print(len(valloader))
+img, bboxes, labels, img_name= next(iter(trainloader))
+print(img.size())
+print(bboxes.size())
+print(labels.size())
+#print(img_name.size())
+
+
 net = torch.nn.DataParallel(net)#, device_ids=[2,3,4,5])
 cudnn.benchmark = True
 net.cuda()
@@ -111,6 +120,7 @@ def train(epoch):
 
         optimizer.zero_grad()
         loc_preds, cls_preds = net(inputs)
+
         loss = criterion(loc_preds, loc_targets, cls_preds, cls_targets)
         loss.backward()
         optimizer.step()
@@ -154,3 +164,4 @@ def test(epoch):
 for epoch in range(start_epoch, start_epoch+200):
     train(epoch)
     test(epoch)
+

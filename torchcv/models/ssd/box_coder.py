@@ -35,6 +35,9 @@ class SSDBoxCoder:
         return torch.Tensor(boxes)  # xywh
 
     def encode(self, boxes, labels):
+        #print("encode")
+        #print(boxes.size())
+        #print(labels.size())
         '''Encode target bounding boxes and class labels.
 
         SSD coding rules:
@@ -103,6 +106,9 @@ class SSDBoxCoder:
           boxes: (tensor) bbox locations, sized [#obj,4].
           labels: (tensor) class labels, sized [#obj,].
         '''
+        #print("decode")
+        #print(loc_preds.size())
+        #print(cls_preds.size())
         variances = (0.1, 0.2)
         #xy = loc_preds[:,:2] * variances[0] * self.default_boxes[:,2:] + self.default_boxes[:,:2]
         #wh = torch.exp(loc_preds[:,2:]*variances[1]) * self.default_boxes[:,2:]

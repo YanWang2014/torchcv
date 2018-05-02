@@ -130,6 +130,8 @@ class SSD300(nn.Module):
         loc_preds = []
         cls_preds = []
         xs = self.extractor(x)
+        print("net")
+        print(x.size())
         for i, x in enumerate(xs):
             loc_pred = self.loc_layers[i](x)
             loc_pred = loc_pred.permute(0,2,3,1).contiguous()
@@ -141,6 +143,7 @@ class SSD300(nn.Module):
 
         loc_preds = torch.cat(loc_preds, 1)
         cls_preds = torch.cat(cls_preds, 1)
+        print(loc_preds.size())
         return loc_preds, cls_preds
 
 
