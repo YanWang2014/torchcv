@@ -27,14 +27,14 @@ from utils import transforms
 
 lr =1e-3
 img_size = 512
-batch_size  = 4
+batch_size  = 32
 
-train_label_files = '../train_part1_20180316/train_1000/txt_1000/'
-train_image_files = '../train_part1_20180316/train_1000/image_1000/'
+train_label_files = '../../data/txt_9000/'
+train_image_files = '../../data/image_9000/'
 
 checkpoints = 'pths/ckpt.pth'
 resume = False
-INPUT_WORKERS = 4
+INPUT_WORKERS = 8
 
 
 # Model
@@ -56,18 +56,20 @@ print('==> Preparing dataset..')
 box_coder = SSDBoxCoder(net)
 def train_transform(img, boxes, labels):
     img, boxes = transforms.resize(img, boxes, size=(img_size, img_size), random_interpolation=False)
-    img = transforms.Compose([
+    img = T.Compose([
         T.ToTensor(),
         T.Normalize((0.485,0.456,0.406),(0.229,0.224,0.225))
     ])(img)
+    boxes, labels = box_coder.encode(boxes, labels)
     return img, boxes, labels
 
 def val_transform(img, boxes, labels):
     img, boxes = transforms.resize(img, boxes, size=(img_size, img_size), random_interpolation=False)
-    img = transforms.Compose([
+    img = T.Compose([
         T.ToTensor(),
         T.Normalize((0.485,0.456,0.406),(0.229,0.224,0.225))
     ])(img)
+    boxes, labels = box_coder.encode(boxes, labels)
     return img, boxes, labels
 
 trainset = text_dataset.TextDataset(label_files = train_label_files,
@@ -81,18 +83,19 @@ valset = text_dataset.TextDataset(label_files = train_label_files,
                                    transform=val_transform)
 
 trainloader =  data.DataLoader(trainset, batch_size=batch_size,
-                               shuffle=True, num_workers=INPUT_WORKERS,
-                               collate_fn=text_dataset.bbox_collate_fn
+                               shuffle=True, num_workers=INPUT_WORKERS
+                               #collate_fn=text_dataset.bbox_collate_fn
                                )
 valloader =  data.DataLoader(valset, batch_size=batch_size,
-                               shuffle=False, num_workers=INPUT_WORKERS,
-                               collate_fn=text_dataset.bbox_collate_fn
+                               shuffle=False, num_workers=INPUT_WORKERS
+                               #collate_fn=text_dataset.bbox_collate_fn
                                )
-net.cuda()
-net = torch.nn.DataParallel(net, device_ids=[2,3,4,5])
-cudnn.benchmark = True
 
+net = torch.nn.DataParallel(net)#, device_ids=[2,3,4,5])
+cudnn.benchmark = True
+net.cuda()
 criterion = SSDLoss(num_classes=2)
+criterion.cuda()
 optimizer = optim.SGD(net.parameters(), lr=lr, momentum=0.9, weight_decay=1e-4)
 
 # Training
@@ -100,7 +103,8 @@ def train(epoch):
     print('\nEpoch: %d' % epoch)
     net.train()
     train_loss = 0
-    for batch_idx, (inputs, loc_targets, cls_targets) in enumerate(trainloader):
+    for batch_idx, (inputs, loc_targets, cls_targets, names) in enumerate(trainloader):
+        print(batch_idx/len(trainloader))
         inputs = Variable(inputs.cuda())
         loc_targets = Variable(loc_targets.cuda())
         cls_targets = Variable(cls_targets.cuda())
@@ -120,7 +124,7 @@ def test(epoch):
     print('\nTest')
     net.eval()
     test_loss = 0
-    for batch_idx, (inputs, loc_targets, cls_targets) in enumerate(valloader):
+    for batch_idx, (inputs, loc_targets, cls_targets, names) in enumerate(valloader):
         inputs = Variable(inputs.cuda(), volatile=True)
         loc_targets = Variable(loc_targets.cuda())
         cls_targets = Variable(cls_targets.cuda())

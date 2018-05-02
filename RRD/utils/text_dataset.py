@@ -75,7 +75,7 @@ class TextDataset(data.Dataset):
             bboxes = self.bboxes[idx].clone()
             if self.transform:
                 #image = self.transform(image)
-                labels = torch.Tensor(1)
+                labels = torch.ones(len(bboxes),)
                 image, bboxes, labels = self.transform(image, bboxes, labels)
             return image, bboxes, labels, img_name
 
