@@ -98,6 +98,32 @@ def box_iou(box1, box2):
     iou = inter / (area1[:,None] + area2 - inter)
     return iou
 
+def simplified_iou(box1, box2):
+    '''Compute the intersection over union of two set of boxes.
+
+    The box1 order must be (xmin, ymin, xmax, ymax).
+    box2: ('x1','y1','x2','y2','x3','y3','x4','y4')
+
+    Args:
+      box1: (tensor) bounding boxes, sized [N,4].
+      box2: (tensor) bounding boxes, sized [M,8].
+
+    Return:
+      (tensor) iou, sized [N,M].
+
+    Reference:
+      https://github.com/chainer/chainercv/blob/master/chainercv/utils/bbox/bbox_iou.py
+    '''
+    xs = box2[:,[0,2,4,6]].numpy()
+    ys = box2[:,[1,3,5,7]].numpy()
+    xmin = np.amin(xs, axis=1)
+    xmax = np.amax(xs, axis=1)
+    ymin = np.amin(ys, axis=1)
+    ymax = np.amax(ys, axis=1)
+    simplified_box2 = np.stack([xmin, ymin, xmax, ymax], 1)
+    simplified_box2 = torch.from_numpy(simplified_box2)
+    return box_iou(box1, simplified_box2)
+
 def quadrilateral_area(box):
     '''Compute the area of quadrilateral
     
@@ -237,3 +263,6 @@ if __name__ == "__main__":
     print(quadrilateral_iou(default_boxes, default_boxes2))
     # 1.0000  0.2500
     # 0.3333  0.2500
+
+    print(simplified_iou(torch.Tensor([[0,0,1,1]]),torch.Tensor([[ 0.,  0.,  1.,  0.,  1.,  1.,  0.,  1.]])))
+    # 1

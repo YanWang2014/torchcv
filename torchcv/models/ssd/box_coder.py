@@ -4,7 +4,7 @@ import torch
 import itertools
 
 from torchcv.utils import meshgrid
-from torchcv.utils.box import box_iou, box_nms, change_box_order, quadrilateral_iou
+from torchcv.utils.box import box_iou, box_nms, change_box_order, quadrilateral_iou, simplified_iou
 
 
 class SSDBoxCoder:
@@ -65,7 +65,7 @@ class SSDBoxCoder:
         default_boxes = self.default_boxes  # xywh
         default_boxes = change_box_order(default_boxes, 'xywh2xyxyxyxy')
 
-        ious = quadrilateral_iou(default_boxes, boxes)  # [#anchors, #obj]
+        ious = simplified_iou(change_box_order(self.default_boxes, 'xywh2xyxy'), boxes)  # [#anchors, #obj]
         index = torch.LongTensor(len(default_boxes)).fill_(-1)
         masked_ious = ious.clone()
         while True:
