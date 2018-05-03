@@ -36,14 +36,19 @@ class SSDLoss(nn.Module):
         '''Compute loss between (loc_preds, loc_targets) and (cls_preds, cls_targets).
 
         Args:
-          loc_preds: (tensor) predicted locations, sized [N, #anchors, 4].
-          loc_targets: (tensor) encoded target locations, sized [N, #anchors, 4].
+          loc_preds: (tensor) predicted locations, sized [N, #anchors, 8].
+          loc_targets: (tensor) encoded target locations, sized [N, #anchors, 8].
           cls_preds: (tensor) predicted class confidences, sized [N, #anchors, #classes].
           cls_targets: (tensor) encoded target labels, sized [N, #anchors].
 
         loss:
           (tensor) loss = SmoothL1Loss(loc_preds, loc_targets) + CrossEntropyLoss(cls_preds, cls_targets).
         '''
+        assert(loc_preds.size() == torch.Size([32, 24564, 8]))
+        assert(loc_targets.size() == torch.Size([32, 24564, 8]))
+        assert(cls_preds.size() == torch.Size([32, 24564, 2]))
+        assert(cls_targets.size() == torch.Size([32, 24564]))
+
         pos = cls_targets > 0  # [N,#anchors]
         batch_size = pos.size(0)
         num_pos = pos.data.long().sum()
