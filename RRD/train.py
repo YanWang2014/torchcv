@@ -26,7 +26,7 @@ from utils import text_dataset
 from utils import transforms
 
 lr =1e-3
-img_size = 300
+img_size = 512
 batch_size  = 32
 
 train_label_files = '../../data/train_1000/txt_1000/'
@@ -39,7 +39,7 @@ INPUT_WORKERS = 16
 
 # Model
 print('==> Building model..')
-net = SSD300(num_classes=2)
+net = SSD512(num_classes=2)
 #net = FPNSSD512(num_classes=2)
 #net.load_state_dict(torch.load(args.model))
 best_loss = float('inf')  # best test loss
