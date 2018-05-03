@@ -44,10 +44,10 @@ class SSDLoss(nn.Module):
         loss:
           (tensor) loss = SmoothL1Loss(loc_preds, loc_targets) + CrossEntropyLoss(cls_preds, cls_targets).
         '''
-        assert(loc_preds.size() == torch.Size([32, 24564, 8]))
-        assert(loc_targets.size() == torch.Size([32, 24564, 8]))
-        assert(cls_preds.size() == torch.Size([32, 24564, 2]))
-        assert(cls_targets.size() == torch.Size([32, 24564]))
+        #assert(loc_preds.size() == torch.Size([32, 24564, 8]) or loc_preds.size() == torch.Size([4, 24564, 8])), loc_preds.size()
+        #assert(loc_targets.size() == torch.Size([32, 24564, 8]) or loc_targets.size() == torch.Size([4, 24564, 8]))
+        #assert(cls_preds.size() == torch.Size([32, 24564, 2]) or cls_preds.size() == torch.Size([4, 24564, 2])), cls_preds.size()
+        #assert(cls_targets.size() == torch.Size([32, 24564]) or cls_targets.size() == torch.Size([4, 24564]))
 
         pos = cls_targets > 0  # [N,#anchors]
         batch_size = pos.size(0)
@@ -67,6 +67,10 @@ class SSDLoss(nn.Module):
         cls_loss = cls_loss.view(batch_size, -1)
         cls_loss[cls_targets<0] = 0  # set ignored loss to 0
         neg = self._hard_negative_mining(cls_loss, pos)  # [N,#anchors]
+        print(cls_loss.size())
+        print(neg.size())
+        print((pos|neg).size())
+        print(cls_loss[pos|neg].size())
         cls_loss = cls_loss[pos|neg].sum()
 
         print('loc_loss: %.3f | cls_loss: %.3f' \

@@ -91,12 +91,12 @@ valloader =  data.DataLoader(valset, batch_size=batch_size,
                                #collate_fn=text_dataset.bbox_collate_fn
                                )
 
-#print(len(trainloader))
-#print(len(valloader))
-#img, bboxes, labels, img_name= next(iter(trainloader))
-#print(img.size())
-#print(bboxes.size())
-#print(labels.size())
+print(len(trainloader))
+print(len(valloader))
+img, bboxes, labels, img_name= next(iter(trainloader))
+print(img.size())
+print(bboxes.size())
+print(labels.size())
 
 net = torch.nn.DataParallel(net)#, device_ids=[2,3,4,5])
 cudnn.benchmark = True
@@ -111,7 +111,7 @@ def train(epoch):
     net.train()
     train_loss = 0
     for batch_idx, (inputs, loc_targets, cls_targets, names) in enumerate(trainloader):
-        print(batch_idx/len(trainloader))
+        #print(batch_idx/len(trainloader))
         inputs = Variable(inputs.cuda())
         loc_targets = Variable(loc_targets.cuda())
         cls_targets = Variable(cls_targets.cuda())

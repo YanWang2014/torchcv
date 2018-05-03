@@ -1,0 +1,28 @@
+A strange bug:
+
+
+c_loss: 105742132.893 | cls_loss: 808184.973 | train_loss: 106550312.000 | avg_loss: 5091650.395 [21/29]
+torch.Size([32, 24564])
+torch.Size([32, 24564])
+torch.Size([32, 24564])
+torch.Size([8424])
+loc_loss: 1723596594355625.000 | cls_loss: 5477131551778.036 | train_loss: 1729073571168256.000 | avg_loss: 78594258095132.469 [22/29]
+torch.Size([32, 24564])
+torch.Size([32, 24564])
+torch.Size([32, 24564])
+THCudaCheck FAIL file=/opt/conda/conda-bld/pytorch_1518243271935/work/torch/lib/THC/generated/../THCReduceAll.cuh line=339 error=77 : an illegal memory access was encountered
+Traceback (most recent call last):
+  File "train.py", line 163, in <module>
+    train(epoch)
+  File "train.py", line 122, in train
+    loss = criterion(loc_preds, loc_targets, cls_preds, cls_targets)
+  File "/home/member/fuwang/opt/anaconda/lib/python3.6/site-packages/torch/nn/modules/module.py", line 357, in __call__
+    result = self.forward(*input, **kwargs)
+  File "../torchcv/loss/ssd_loss.py", line 73, in forward
+    print(cls_loss[pos|neg].size())
+  File "/home/member/fuwang/opt/anaconda/lib/python3.6/site-packages/torch/autograd/variable.py", line 74, in __getitem__
+    return MaskedSelect.apply(self, key)
+  File "/home/member/fuwang/opt/anaconda/lib/python3.6/site-packages/torch/autograd/_functions/tensor.py", line 465, in forward
+    return tensor.masked_select(mask)
+RuntimeError: cuda runtime error (77) : an illegal memory access was encountered at /opt/conda/conda-bld/pytorch_1518243271935/work/torch/lib/THC/generated/../THCReduceAll.cuh:339
+
