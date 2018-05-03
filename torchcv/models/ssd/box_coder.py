@@ -88,7 +88,7 @@ class SSDBoxCoder:
 #        loc_xy = (boxes[:,:2]-default_boxes[:,:2]) / default_boxes[:,2:] / variances[0]
 #        loc_wh = torch.log(boxes[:,2:]/default_boxes[:,2:]) / variances[1]
 #        loc_targets = torch.cat([loc_xy,loc_wh], 1)
-        loc_targets = (boxes-default_boxes / self.default_boxes[:,2:].repeat(1,4)) / variances[0]
+        loc_targets = (boxes-default_boxes) / self.default_boxes[:,2:].repeat(1,4) / variances[0]
         cls_targets = 1 + labels[index.clamp(min=0)]
         cls_targets[index<0] = 0
         return loc_targets, cls_targets
