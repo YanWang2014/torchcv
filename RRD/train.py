@@ -25,7 +25,7 @@ from torchcv.loss import SSDLoss
 from utils import text_dataset
 from utils import transforms
 
-lr =1e-3
+lr =1e-4
 img_size = 512
 batch_size  = 32
 
